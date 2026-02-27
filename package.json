@@ -1,0 +1,16 @@
+{
+  "name": "nova-hub",
+  "version": "1.0.0",
+  "description": "Nova Hub — Games, Apps, UV Proxy",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "postinstall": "node scripts/copy-assets.js"
+  },
+  "dependencies": {
+    "@titaniumnetwork-group/bare-server-node": "^3.0.3",
+    "@mercuryworkshop/bare-mux": "^2.0.2",
+    "ultraviolet": "^2.3.3",
+    "express": "^4.18.2"
+  }
+}

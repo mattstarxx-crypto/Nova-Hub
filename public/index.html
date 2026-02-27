@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVA HUB</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue: #00aaff;
+  --blue2: #0055bb;
+  --blue3: #003388;
+  --deep: #00060f;
+  --card: rgba(0,25,55,0.65);
+  --glow: 0 0 22px rgba(0,170,255,0.55);
+  --border: rgba(0,170,255,0.22);
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:var(--deep);color:#c8e4ff;font-family:'Rajdhani',sans-serif;overflow:hidden;}
+
+/* ── CANVAS / NEBULA ── */
+#star-canvas{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.nebula{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 15% 25%,rgba(0,60,180,0.14) 0%,transparent 55%),
+    radial-gradient(ellipse 60% 80% at 85% 75%,rgba(0,20,100,0.18) 0%,transparent 55%),
+    radial-gradient(ellipse 100% 50% at 50% 100%,rgba(0,30,80,0.22) 0%,transparent 50%);
+  animation:nebDrift 25s ease-in-out infinite alternate;}
+@keyframes nebDrift{0%{transform:scale(1) translate(0,0);}100%{transform:scale(1.04) translate(1%,-1%);}}
+.scanlines{position:fixed;inset:0;pointer-events:none;z-index:500;
+  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.04) 3px,rgba(0,0,0,0.04) 4px);}
+
+/* ── SHELL ── */
+#shell{position:relative;z-index:10;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+
+/* ── CORNER BRACKETS ── */
+.corner-bracket{position:absolute;width:60px;height:60px;pointer-events:none;}
+.corner-bracket svg{width:100%;height:100%;}
+.cb-tl{top:0;left:0;}.cb-tr{top:0;right:0;transform:scaleX(-1);}
+.cb-bl{bottom:0;left:0;transform:scaleY(-1);}.cb-br{bottom:0;right:0;transform:scale(-1,-1);}
+
+/* ── HUD ── */
+.hud-corner{position:absolute;font-family:'Share Tech Mono',monospace;font-size:.62rem;
+  color:rgba(0,170,255,.35);letter-spacing:.08em;line-height:1.7;pointer-events:none;}
+.hud-tl{top:14px;left:18px;}.hud-tr{top:14px;right:18px;text-align:right;}
+.hud-bl{bottom:14px;left:18px;}.hud-br{bottom:14px;right:18px;text-align:right;}
+.hud-val{color:rgba(0,170,255,.65);}
+
+/* ══════════════════════════════
+   HOME PAGE
+══════════════════════════════ */
+#home-page{flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;padding:20px;overflow:hidden;position:relative;}
+
+.home-logo-wrap{display:flex;flex-direction:column;align-items:center;margin-bottom:8px;}
+.home-logo-eyebrow{font-family:'Share Tech Mono',monospace;font-size:.7rem;
+  letter-spacing:.5em;color:var(--blue);opacity:.55;text-transform:uppercase;margin-bottom:10px;}
+.home-logo{font-family:'Orbitron',monospace;font-size:clamp(3.2rem,9vw,7rem);
+  font-weight:900;letter-spacing:.12em;line-height:1;
+  background:linear-gradient(160deg,#fff 0%,#88ccff 25%,#00aaff 55%,#0044cc 80%,#001f7a 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 40px rgba(0,150,255,.9)) drop-shadow(0 0 80px rgba(0,80,255,.4));
+  animation:logoBreath 4s ease-in-out infinite alternate;}
+@keyframes logoBreath{
+  0%{filter:drop-shadow(0 0 25px rgba(0,150,255,.7)) drop-shadow(0 0 60px rgba(0,80,255,.3));}
+  100%{filter:drop-shadow(0 0 55px rgba(0,170,255,1)) drop-shadow(0 0 120px rgba(0,120,255,.5));}}
+.home-logo-sub{font-family:'Share Tech Mono',monospace;font-size:.72rem;
+  letter-spacing:.4em;color:rgba(0,170,255,.5);margin-top:10px;}
+
+.logo-line{width:260px;height:1px;margin:12px auto 0;
+  background:linear-gradient(90deg,transparent,var(--blue),transparent);position:relative;}
+.logo-line::before{content:'';position:absolute;top:-1px;left:-10px;
+  width:10px;height:3px;background:var(--blue);box-shadow:var(--glow);
+  animation:scanLine 3s ease-in-out infinite;}
+@keyframes scanLine{0%{left:-10px;}100%{left:270px;}}
+
+/* ── PROXY STATUS BADGE ── */
+.proxy-status{
+  display:flex;align-items:center;gap:8px;margin-bottom:14px;
+  font-family:'Share Tech Mono',monospace;font-size:.65rem;letter-spacing:.15em;
+  color:rgba(0,255,120,.6);}
+.status-dot{width:7px;height:7px;border-radius:50%;background:#00ff80;
+  box-shadow:0 0 8px #00ff80;animation:statusPulse 2s ease-in-out infinite;}
+@keyframes statusPulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.4;transform:scale(.8);}}
+.proxy-status.loading .status-dot{background:var(--blue);box-shadow:0 0 8px var(--blue);}
+.proxy-status.error .status-dot{background:#ff4444;box-shadow:0 0 8px #ff4444;}
+
+/* ── BIG SEARCH ── */
+.home-search-wrap{width:100%;max-width:700px;margin:16px 0;}
+.home-search-label{font-family:'Share Tech Mono',monospace;font-size:.6rem;
+  letter-spacing:.3em;color:rgba(0,170,255,.4);margin-bottom:8px;}
+
+.home-search-box{position:relative;width:100%;}
+.home-search-box::before,.home-search-box::after,.home-search-box .sb-bl,.home-search-box .sb-br{
+  content:'';position:absolute;width:18px;height:18px;
+  border-color:var(--blue);border-style:solid;opacity:.9;z-index:2;
+  transition:width .3s,height .3s;}
+.home-search-box::before{top:-2px;left:-2px;border-width:2px 0 0 2px;}
+.home-search-box::after {top:-2px;right:-2px;border-width:2px 2px 0 0;}
+.home-search-box .sb-bl{bottom:-2px;left:-2px;border-width:0 0 2px 2px;}
+.home-search-box .sb-br{bottom:-2px;right:-2px;border-width:0 2px 2px 0;}
+.home-search-box:focus-within::before,.home-search-box:focus-within::after,
+.home-search-box:focus-within .sb-bl,.home-search-box:focus-within .sb-br{width:28px;height:28px;}
+
+.home-search-inner{display:flex;width:100%;position:relative;z-index:1;}
+.home-search-inner input{
+  flex:1;background:rgba(0,20,50,.75);border:1px solid rgba(0,170,255,.3);border-right:none;
+  color:#e0f0ff;padding:16px 22px;font-family:'Share Tech Mono',monospace;
+  font-size:.95rem;letter-spacing:.05em;outline:none;
+  transition:border-color .3s,background .3s;backdrop-filter:blur(12px);}
+.home-search-inner input:focus{border-color:var(--blue);background:rgba(0,30,70,.85);}
+.home-search-inner input::placeholder{color:rgba(0,170,255,.28);font-family:'Share Tech Mono',monospace;}
+.home-search-inner button{
+  background:linear-gradient(135deg,var(--blue3),var(--blue2),var(--blue));
+  border:1px solid var(--blue);color:#fff;padding:16px 28px;cursor:pointer;
+  font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:.2em;
+  transition:all .3s;text-transform:uppercase;white-space:nowrap;position:relative;overflow:hidden;}
+.home-search-inner button:hover{box-shadow:var(--glow);}
+
+.home-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;justify-content:center;}
+.h-chip{font-family:'Share Tech Mono',monospace;font-size:.66rem;letter-spacing:.07em;
+  padding:5px 13px;border:1px solid rgba(0,170,255,.2);background:rgba(0,30,70,.4);
+  color:rgba(0,170,255,.7);cursor:pointer;transition:all .25s;}
+.h-chip::before{content:'▸ ';}
+.h-chip:hover{border-color:var(--blue);color:#fff;background:rgba(0,80,160,.35);}
+
+.home-nav{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;justify-content:center;}
+.home-nav-btn{font-family:'Orbitron',monospace;font-size:.7rem;letter-spacing:.18em;
+  padding:12px 28px;border:1px solid rgba(0,170,255,.35);background:rgba(0,20,55,.5);
+  color:rgba(0,170,255,.8);cursor:pointer;transition:all .3s;text-transform:uppercase;
+  position:relative;overflow:hidden;backdrop-filter:blur(8px);}
+.home-nav-btn:hover{border-color:var(--blue);color:#fff;box-shadow:var(--glow);}
+.home-nav-btn .btn-icon{margin-right:8px;}
+
+/* ══════════════════════════════
+   INNER APP
+══════════════════════════════ */
+#inner-app{display:none;flex:1;flex-direction:column;overflow:hidden;}
+#inner-app.open{display:flex;}
+
+#top-bar{display:flex;align-items:center;gap:10px;padding:7px 14px;flex-shrink:0;
+  background:rgba(0,5,18,.92);border-bottom:1px solid rgba(0,170,255,.18);backdrop-filter:blur(20px);}
+.bar-logo{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:900;letter-spacing:.12em;
+  background:linear-gradient(135deg,#fff,var(--blue));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;filter:drop-shadow(0 0 8px rgba(0,170,255,.6));
+  white-space:nowrap;flex-shrink:0;cursor:pointer;}
+.bar-tabs{display:flex;gap:6px;flex-wrap:nowrap;overflow-x:auto;flex:1;}
+.bar-tabs::-webkit-scrollbar{display:none;}
+.btab{font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:.12em;padding:7px 16px;
+  background:transparent;border:1px solid rgba(0,170,255,.25);color:rgba(0,170,255,.6);
+  cursor:pointer;transition:all .3s;text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
+.btab:hover{color:#cce8ff;border-color:rgba(0,170,255,.5);}
+.btab.active{border-color:var(--blue);color:#fff;box-shadow:var(--glow);}
+
+/* ── BROWSER VIEW ── */
+#browser-view{display:none;flex-direction:column;flex:1;overflow:hidden;}
+#browser-view.open{display:flex;}
+#browser-toolbar{background:rgba(0,5,18,.96);border-bottom:1px solid rgba(0,170,255,.2);
+  padding:6px 12px;display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.tbtn{font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:.1em;
+  padding:6px 14px;border:1px solid rgba(0,170,255,.35);background:rgba(0,25,65,.8);
+  color:var(--blue);cursor:pointer;transition:all .25s;white-space:nowrap;}
+.tbtn:hover{border-color:var(--blue);color:#fff;box-shadow:var(--glow);}
+#browser-url-bar{flex:1;background:rgba(0,8,25,.8);border:1px solid rgba(0,170,255,.18);
+  padding:6px 14px;color:rgba(0,170,255,.65);font-family:'Share Tech Mono',monospace;
+  font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* proxy method badge in toolbar */
+#proxy-method-badge{
+  font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.1em;
+  padding:4px 10px;border-radius:1px;white-space:nowrap;flex-shrink:0;}
+.badge-uv{background:rgba(0,255,120,.12);color:#00ff80;border:1px solid rgba(0,255,120,.3);}
+.badge-croxy{background:rgba(0,170,255,.12);color:var(--blue);border:1px solid rgba(0,170,255,.3);}
+
+#frame-wrap{position:relative;flex:1;display:flex;flex-direction:column;overflow:hidden;}
+#site-frame{flex:1;border:none;background:#fff;width:100%;height:100%;}
+
+#frame-loading{display:none;position:absolute;inset:0;background:rgba(0,6,18,.94);z-index:5;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+#frame-loading.show{display:flex;}
+.spinner{width:36px;height:36px;border:2px solid rgba(0,170,255,.15);border-top-color:var(--blue);
+  border-radius:50%;animation:spin .75s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-text{font-family:'Share Tech Mono',monospace;font-size:.65rem;letter-spacing:.25em;
+  color:var(--blue);animation:blink 1.2s ease-in-out infinite alternate;}
+@keyframes blink{0%{opacity:.3;}100%{opacity:1;}}
+.loading-sub{font-family:'Share Tech Mono',monospace;font-size:.55rem;letter-spacing:.15em;
+  color:rgba(0,170,255,.4);margin-top:4px;}
+
+#blocked-notice{display:none;position:absolute;inset:0;background:rgba(0,6,18,.97);
+  flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:40px;text-align:center;}
+#blocked-notice.show{display:flex;}
+.blocked-icon{font-size:2.8rem;}
+.blocked-title{font-family:'Orbitron',monospace;font-size:.9rem;color:#fff;letter-spacing:.12em;}
+.blocked-msg{color:rgba(0,170,255,.45);font-size:.85rem;max-width:420px;line-height:1.7;}
+.btn-a{font-family:'Orbitron',monospace;font-size:.6rem;letter-spacing:.12em;
+  padding:10px 22px;border:none;color:#fff;cursor:pointer;transition:all .3s;}
+.btn-a.primary{background:linear-gradient(135deg,var(--blue3),var(--blue));}
+.btn-a.secondary{background:rgba(0,50,110,.7);border:1px solid rgba(0,170,255,.3);}
+.btn-a:hover{box-shadow:var(--glow);transform:scale(1.04);}
+
+/* ── CARDS ── */
+#cards-area{flex:1;overflow-y:auto;padding:22px 20px 50px;}
+#cards-area::-webkit-scrollbar{width:3px;}
+#cards-area::-webkit-scrollbar-thumb{background:rgba(0,170,255,.3);}
+section{display:none;animation:fadeUp .35s ease;}
+section.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
+
+.sec-head{margin-bottom:18px;}
+.sec-title{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;
+  color:#fff;letter-spacing:.1em;margin-bottom:2px;}
+.sec-sub{font-family:'Share Tech Mono',monospace;color:rgba(0,170,255,.5);font-size:.7rem;letter-spacing:.2em;}
+
+.s-search{display:flex;margin-bottom:16px;max-width:400px;}
+.s-search input{flex:1;background:rgba(0,25,60,.8);border:1px solid rgba(0,170,255,.25);
+  border-right:none;color:#fff;padding:9px 14px;font-family:'Share Tech Mono',monospace;
+  font-size:.8rem;outline:none;transition:border-color .3s;}
+.s-search input:focus{border-color:var(--blue);}
+.s-search input::placeholder{color:rgba(0,170,255,.3);}
+.s-search button{background:var(--blue2);border:1px solid var(--blue);color:#fff;
+  padding:9px 15px;cursor:pointer;font-family:'Orbitron',monospace;font-size:.56rem;
+  letter-spacing:.1em;transition:background .3s;}
+.s-search button:hover{background:var(--blue);}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:13px;}
+
+.card{background:var(--card);border:1px solid rgba(0,170,255,.12);padding:18px 16px;
+  cursor:pointer;transition:all .3s;position:relative;overflow:hidden;}
+.card::before,.card::after,.card .c-bl,.card .c-br{
+  content:'';position:absolute;width:10px;height:10px;
+  border-color:rgba(0,170,255,.4);border-style:solid;opacity:0;
+  transition:opacity .3s,width .3s,height .3s;}
+.card::before{top:0;left:0;border-width:1px 0 0 1px;}
+.card::after{top:0;right:0;border-width:1px 1px 0 0;}
+.card .c-bl{bottom:0;left:0;border-width:0 0 1px 1px;}
+.card .c-br{bottom:0;right:0;border-width:0 1px 1px 0;}
+.card:hover::before,.card:hover::after,.card:hover .c-bl,.card:hover .c-br{opacity:1;width:14px;height:14px;}
+.card .sweep{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 0%,rgba(0,170,255,.06),transparent 70%);
+  opacity:0;transition:opacity .4s;}
+.card:hover{border-color:rgba(0,170,255,.45);box-shadow:var(--glow);transform:translateY(-3px) scale(1.01);}
+.card:hover .sweep{opacity:1;}
+
+.card-icon{font-size:1.8rem;margin-bottom:10px;display:block;filter:drop-shadow(0 0 6px rgba(0,170,255,.4));}
+.card-title{font-family:'Orbitron',monospace;font-size:.73rem;font-weight:700;
+  color:#fff;letter-spacing:.07em;margin-bottom:4px;}
+.card-desc{font-size:.77rem;color:rgba(130,180,255,.55);line-height:1.5;}
+.card-badge{position:absolute;top:9px;right:9px;font-family:'Share Tech Mono',monospace;
+  font-size:.5rem;letter-spacing:.08em;padding:2px 6px;}
+.badge-hot{background:rgba(255,60,0,.12);color:#ff5500;border:1px solid rgba(255,60,0,.3);}
+.badge-new{background:rgba(0,255,120,.1);color:#00ff88;border:1px solid rgba(0,255,120,.3);}
+.badge-fast{background:rgba(0,170,255,.12);color:var(--blue);border:1px solid rgba(0,170,255,.3);}
+
+/* ── PROXY SECTION ── */
+.proxy-box{background:rgba(0,15,42,.75);border:1px solid rgba(0,170,255,.2);
+  padding:22px 24px;max-width:660px;margin-bottom:24px;position:relative;backdrop-filter:blur(10px);}
+.proxy-box::before{content:'';position:absolute;top:0;left:0;width:16px;height:16px;
+  border-top:2px solid var(--blue);border-left:2px solid var(--blue);}
+.proxy-box::after{content:'';position:absolute;top:0;right:0;width:16px;height:16px;
+  border-top:2px solid var(--blue);border-right:2px solid var(--blue);}
+.proxy-box .c-bl{position:absolute;bottom:0;left:0;width:16px;height:16px;
+  border-bottom:2px solid var(--blue);border-left:2px solid var(--blue);}
+.proxy-box .c-br{position:absolute;bottom:0;right:0;width:16px;height:16px;
+  border-bottom:2px solid var(--blue);border-right:2px solid var(--blue);}
+.proxy-label{font-family:'Share Tech Mono',monospace;font-size:.63rem;color:var(--blue);
+  letter-spacing:.25em;margin-bottom:10px;opacity:.7;}
+.proxy-row{display:flex;margin:10px 0;}
+.proxy-row input{flex:1;background:rgba(0,10,30,.85);border:1px solid rgba(0,170,255,.25);
+  border-right:none;color:#e0f0ff;padding:12px 16px;
+  font-family:'Share Tech Mono',monospace;font-size:.88rem;outline:none;transition:border-color .3s;}
+.proxy-row input:focus{border-color:var(--blue);}
+.proxy-row input::placeholder{color:rgba(0,170,255,.3);}
+.proxy-row button{background:linear-gradient(135deg,var(--blue3),var(--blue));border:none;
+  color:#fff;padding:12px 22px;cursor:pointer;font-family:'Orbitron',monospace;
+  font-size:.6rem;letter-spacing:.18em;transition:all .3s;}
+.proxy-row button:hover{box-shadow:var(--glow);}
+.proxy-note{font-family:'Share Tech Mono',monospace;font-size:.66rem;color:rgba(0,170,255,.35);}
+
+/* scramjet toggle */
+.proxy-engine-row{display:flex;align-items:center;gap:12px;margin:12px 0 8px;}
+.engine-label{font-family:'Share Tech Mono',monospace;font-size:.62rem;color:rgba(0,170,255,.5);letter-spacing:.1em;}
+.engine-toggle{display:flex;gap:0;}
+.etog-btn{font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.08em;
+  padding:5px 14px;border:1px solid rgba(0,170,255,.25);background:transparent;
+  color:rgba(0,170,255,.5);cursor:pointer;transition:all .2s;}
+.etog-btn:first-child{border-right:none;}
+.etog-btn.active{background:rgba(0,100,200,.3);color:#fff;border-color:var(--blue);}
+
+.proxy-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px;}
+.p-chip{font-family:'Share Tech Mono',monospace;font-size:.66rem;padding:5px 12px;
+  border:1px solid rgba(0,170,255,.2);background:rgba(0,25,65,.5);color:rgba(0,170,255,.7);
+  cursor:pointer;transition:all .25s;}
+.p-chip::before{content:'⬡ ';}
+.p-chip:hover{border-color:var(--blue);color:#fff;background:rgba(0,70,150,.35);}
+
+/* ── SHOOTING STAR ── */
+.shoot{position:fixed;width:140px;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(0,200,255,.9),transparent);
+  animation:shoot var(--sd) linear forwards;z-index:1;pointer-events:none;}
+@keyframes shoot{
+  0%{transform:translateX(-160px) translateY(0) rotate(-22deg);opacity:1;}
+  100%{transform:translateX(130vw) translateY(90px) rotate(-22deg);opacity:0;}}
+
+@media(max-width:600px){
+  .cards{grid-template-columns:repeat(auto-fill,minmax(145px,1fr));}
+  #cards-area{padding:14px 12px 40px;}
+  .home-nav-btn{padding:10px 16px;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="star-canvas"></canvas>
+<div class="nebula"></div>
+<div class="scanlines"></div>
+
+<div id="shell">
+
+  <!-- ══════════════════════════
+       HOME PAGE
+  ══════════════════════════ -->
+  <div id="home-page">
+
+    <!-- HUD corners -->
+    <div class="hud-corner hud-tl">
+      <span style="display:block;">SYS <span class="hud-val" id="hud-time">--:--:--</span></span>
+      <span style="display:block;">NET <span class="hud-val">ONLINE</span></span>
+      <span style="display:block;">VER <span class="hud-val">3.0.0</span></span>
+    </div>
+    <div class="hud-corner hud-tr">
+      <span style="display:block;"><span class="hud-val">NOVA</span> GATEWAY</span>
+      <span style="display:block;">ENGINE <span class="hud-val" id="hud-engine">ULTRAVIOLET</span></span>
+      <span style="display:block;">BYPASS <span class="hud-val">ACTIVE</span></span>
+    </div>
+    <div class="hud-corner hud-bl">
+      <span style="display:block;">SW <span class="hud-val" id="hud-sw">LOADING</span></span>
+    </div>
+    <div class="hud-corner hud-br">
+      <span style="display:block;"><span class="hud-val">ENCRYPTED</span></span>
+    </div>
+
+    <!-- SVG corner brackets -->
+    <div class="corner-bracket cb-tl"><svg viewBox="0 0 60 60" fill="none">
+      <polyline points="0,45 0,0 45,0" stroke="#00aaff" stroke-width="1.5" opacity="0.5"/>
+      <polyline points="0,28 0,0 28,0" stroke="#00aaff" stroke-width="0.7" opacity="0.3"/>
+      <circle cx="0" cy="0" r="2.5" fill="#00aaff" opacity="0.7"/>
+    </svg></div>
+    <div class="corner-bracket cb-tr"><svg viewBox="0 0 60 60" fill="none">
+      <polyline points="0,45 0,0 45,0" stroke="#00aaff" stroke-width="1.5" opacity="0.5"/>
+      <polyline points="0,28 0,0 28,0" stroke="#00aaff" stroke-width="0.7" opacity="0.3"/>
+      <circle cx="0" cy="0" r="2.5" fill="#00aaff" opacity="0.7"/>
+    </svg></div>
+    <div class="corner-bracket cb-bl"><svg viewBox="0 0 60 60" fill="none">
+      <polyline points="0,45 0,0 45,0" stroke="#00aaff" stroke-width="1.5" opacity="0.5"/>
+      <polyline points="0,28 0,0 28,0" stroke="#00aaff" stroke-width="0.7" opacity="0.3"/>
+      <circle cx="0" cy="0" r="2.5" fill="#00aaff" opacity="0.7"/>
+    </svg></div>
+    <div class="corner-bracket cb-br"><svg viewBox="0 0 60 60" fill="none">
+      <polyline points="0,45 0,0 45,0" stroke="#00aaff" stroke-width="1.5" opacity="0.5"/>
+      <polyline points="0,28 0,0 28,0" stroke="#00aaff" stroke-width="0.7" opacity="0.3"/>
+      <circle cx="0" cy="0" r="2.5" fill="#00aaff" opacity="0.7"/>
+    </svg></div>
+
+    <!-- Logo -->
+    <div class="home-logo-wrap">
+      <div class="home-logo-eyebrow">// ACCESS PORTAL v3.0 — ULTRAVIOLET ENGINE //</div>
+      <div class="home-logo">NOVA HUB</div>
+      <div class="home-logo-sub">▸ GAMES · APPS · PROXY · UNLIMITED ◂</div>
+      <div class="logo-line"></div>
+    </div>
+
+    <!-- SW status -->
+    <div class="proxy-status" id="proxy-status-badge">
+      <div class="status-dot"></div>
+      <span id="proxy-status-text">INITIALIZING ULTRAVIOLET...</span>
+    </div>
+
+    <!-- Big proxy search -->
+    <div class="home-search-wrap">
+      <div class="home-search-label">// SCRAMJET PROXY — ENTER ANY URL</div>
+      <div class="home-search-box" id="home-search-box">
+        <span class="sb-bl"></span><span class="sb-br"></span>
+        <div class="home-search-inner">
+          <input type="text" id="home-proxy-input"
+            placeholder="https://youtube.com  •  google.com  •  discord.com"
+            autocomplete="off" spellcheck="false"/>
+          <button onclick="homeProxy()">LAUNCH ▸</button>
+        </div>
+      </div>
+      <div class="home-chips">
+        <div class="h-chip" onclick="homeQuick('https://www.youtube.com')">YouTube</div>
+        <div class="h-chip" onclick="homeQuick('https://discord.com')">Discord</div>
+        <div class="h-chip" onclick="homeQuick('https://www.twitch.tv')">Twitch</div>
+        <div class="h-chip" onclick="homeQuick('https://twitter.com')">Twitter/X</div>
+        <div class="h-chip" onclick="homeQuick('https://www.reddit.com')">Reddit</div>
+        <div class="h-chip" onclick="homeQuick('https://chat.openai.com')">ChatGPT</div>
+        <div class="h-chip" onclick="homeQuick('https://www.spotify.com')">Spotify</div>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <div class="home-nav">
+      <button class="home-nav-btn" onclick="enterApp('games')"><span class="btn-icon">🎮</span>GAMES</button>
+      <button class="home-nav-btn" onclick="enterApp('apps')"><span class="btn-icon">🛠</span>APPS</button>
+      <button class="home-nav-btn" onclick="enterApp('proxy')"><span class="btn-icon">🔒</span>PROXY</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════
+       INNER APP
+  ══════════════════════════ -->
+  <div id="inner-app">
+    <div id="top-bar">
+      <div class="bar-logo" onclick="goHome()">◀ NOVA</div>
+      <div class="bar-tabs">
+        <button class="btab" id="tab-games" onclick="switchTab('games',this)">⬡ GAMES</button>
+        <button class="btab" id="tab-apps"  onclick="switchTab('apps', this)">⬡ APPS</button>
+        <button class="btab" id="tab-proxy" onclick="switchTab('proxy',this)">⬡ PROXY</button>
+      </div>
+    </div>
+
+    <!-- BROWSER -->
+    <div id="browser-view">
+      <div id="browser-toolbar">
+        <button class="tbtn" onclick="closeBrowser()">◀ BACK</button>
+        <div id="browser-url-bar">about:blank</div>
+        <div id="proxy-method-badge" class="badge-uv">ULTRAVIOLET</div>
+        <button class="tbtn" onclick="openNewWin()">↗ TAB</button>
+      </div>
+      <div id="frame-wrap">
+        <div id="frame-loading">
+          <div class="spinner"></div>
+          <div class="loading-text">CONNECTING...</div>
+          <div class="loading-sub" id="loading-sub">via ultraviolet engine</div>
+        </div>
+        <div id="blocked-notice">
+          <div class="blocked-icon">🛸</div>
+          <div class="blocked-title">CONNECTION FAILED</div>
+          <div class="blocked-msg">Ultraviolet couldn't reach this site. Make sure the site is hosted on Vercel (service workers need HTTPS). Try CroxyProxy as fallback.</div>
+          <button class="btn-a primary"   onclick="fallbackProxy()">🌀 TRY CROXYPROXY</button>
+          <button class="btn-a secondary" onclick="openNewWin()">↗ OPEN IN NEW TAB</button>
+        </div>
+        <iframe id="site-frame"
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
+          allow="fullscreen *; autoplay *">
+        </iframe>
+      </div>
+    </div>
+
+    <!-- CARDS -->
+    <div id="cards-area">
+
+      <!-- GAMES -->
+      <section id="games">
+        <div class="sec-head">
+          <div class="sec-title">GAMES</div>
+          <div class="sec-sub">// PLAYS INSIDE NOVA HUB VIA ULTRAVIOLET</div>
+        </div>
+        <div class="s-search"><input type="text" id="game-search" placeholder="Search games..."><button>FIND</button></div>
+        <div class="cards">
+          <div class="card game-card" onclick="openSite('https://1v1.lol','1v1.LOL')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🎯</span><div class="card-badge badge-hot">HOT</div>
+            <div class="card-title">1v1.LOL</div><div class="card-desc">Build & battle shooter.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://krunker.io','Krunker.io')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🔫</span><div class="card-badge badge-hot">HOT</div>
+            <div class="card-title">Krunker.io</div><div class="card-desc">Fast browser FPS.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://slither.io','Slither.io')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🐍</span>
+            <div class="card-title">Slither.io</div><div class="card-desc">Multiplayer snake.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://agar.io','Agar.io')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🟣</span>
+            <div class="card-title">Agar.io</div><div class="card-desc">Cell-eating chaos.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://retrobowl.me','Retro Bowl')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🏈</span><div class="card-badge badge-new">NEW</div>
+            <div class="card-title">Retro Bowl</div><div class="card-desc">Pixel football sim.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://2048game.com','2048')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🧩</span>
+            <div class="card-title">2048</div><div class="card-desc">Slide tiles. Reach 2048.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://lichess.org','Lichess')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">♟️</span><div class="card-badge badge-fast">FAST</div>
+            <div class="card-title">Chess (Lichess)</div><div class="card-desc">Open-source chess.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://skribbl.io','Skribbl.io')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🎨</span>
+            <div class="card-title">Skribbl.io</div><div class="card-desc">Draw & guess.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://diep.io','Diep.io')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🔵</span>
+            <div class="card-title">Diep.io</div><div class="card-desc">Tank battle arena.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://minesweeper.online','Minesweeper')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">💣</span>
+            <div class="card-title">Minesweeper</div><div class="card-desc">Classic puzzle.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://www.coolmathgames.com','Cool Math')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🧮</span><div class="card-badge badge-fast">FAST</div>
+            <div class="card-title">Cool Math Games</div><div class="card-desc">100s of games.</div>
+          </div>
+          <div class="card game-card" onclick="openSite('https://www.poki.com','Poki')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🚀</span><div class="card-badge badge-new">NEW</div>
+            <div class="card-title">Poki</div><div class="card-desc">Massive game library.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- APPS -->
+      <section id="apps">
+        <div class="sec-head">
+          <div class="sec-title">APPS</div>
+          <div class="sec-sub">// TOOLS — UV BYPASSED</div>
+        </div>
+        <div class="s-search"><input type="text" id="app-search" placeholder="Search apps..."><button>FIND</button></div>
+        <div class="cards">
+          <div class="card app-card" onclick="openSite('https://excalidraw.com','Excalidraw')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">✏️</span><div class="card-badge badge-fast">FAST</div>
+            <div class="card-title">Excalidraw</div><div class="card-desc">Whiteboard tool.</div>
+          </div>
+          <div class="card app-card" onclick="openSite('https://www.wolframalpha.com','Wolfram Alpha')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🧮</span>
+            <div class="card-title">Wolfram Alpha</div><div class="card-desc">Compute anything.</div>
+          </div>
+          <div class="card app-card" onclick="openSite('https://translate.google.com','Translate')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🌐</span>
+            <div class="card-title">Google Translate</div><div class="card-desc">100+ languages.</div>
+          </div>
+          <div class="card app-card" onclick="openSite('https://replit.com','Replit')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">💻</span>
+            <div class="card-title">Replit</div><div class="card-desc">Code in browser.</div>
+          </div>
+          <div class="card app-card" onclick="openSite('https://www.onlinegdb.com','OnlineGDB')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">⚙️</span><div class="card-badge badge-hot">HOT</div>
+            <div class="card-title">OnlineGDB</div><div class="card-desc">Compiler & debugger.</div>
+          </div>
+          <div class="card app-card" onclick="openSite('https://www.mathway.com','Mathway')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">📐</span>
+            <div class="card-title">Mathway</div><div class="card-desc">Math solver.</div>
+          </div>
+          <div class="card app-card" onclick="openSite('https://www.canva.com','Canva')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🎨</span>
+            <div class="card-title">Canva</div><div class="card-desc">Design graphics.</div>
+          </div>
+          <div class="card app-card" onclick="openSite('https://www.figma.com','Figma')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🖌️</span><div class="card-badge badge-new">NEW</div>
+            <div class="card-title">Figma</div><div class="card-desc">UI design in browser.</div>
+          </div>
+          <div class="card app-card" onclick="openSite('https://www.notion.so','Notion')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">📝</span>
+            <div class="card-title">Notion</div><div class="card-desc">Notes & planning.</div>
+          </div>
+          <div class="card app-card" onclick="openSite('https://www.codecademy.com','Codecademy')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🎓</span>
+            <div class="card-title">Codecademy</div><div class="card-desc">Learn to code.</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PROXY -->
+      <section id="proxy">
+        <div class="sec-head">
+          <div class="sec-title">PROXY</div>
+          <div class="sec-sub">// ULTRAVIOLET ENGINE — FULL BYPASS</div>
+        </div>
+        <div class="proxy-box">
+          <span class="c-bl"></span><span class="c-br"></span>
+          <div class="proxy-label">▸ ENTER URL TO PROXY</div>
+          <div class="proxy-engine-row">
+            <span class="engine-label">ENGINE:</span>
+            <div class="engine-toggle">
+              <button class="etog-btn active" id="eng-sj" onclick="setEngine('uv')">ULTRAVIOLET</button>
+              <button class="etog-btn" id="eng-cx" onclick="setEngine('croxy')">CROXYPROXY</button>
+            </div>
+          </div>
+          <div class="proxy-row">
+            <input type="text" id="proxy-url" placeholder="https://example.com"/>
+            <button onclick="goProxy()">LAUNCH ▸</button>
+          </div>
+          <div class="proxy-note" id="proxy-engine-note">// ultraviolet — service worker proxy, full bypass, no X-Frame-Options</div>
+          <div class="proxy-chips">
+            <div class="p-chip" onclick="quickProxy('https://www.google.com')">Google</div>
+            <div class="p-chip" onclick="quickProxy('https://www.youtube.com')">YouTube</div>
+            <div class="p-chip" onclick="quickProxy('https://www.reddit.com')">Reddit</div>
+            <div class="p-chip" onclick="quickProxy('https://discord.com')">Discord</div>
+            <div class="p-chip" onclick="quickProxy('https://www.twitch.tv')">Twitch</div>
+            <div class="p-chip" onclick="quickProxy('https://twitter.com')">Twitter/X</div>
+            <div class="p-chip" onclick="quickProxy('https://chat.openai.com')">ChatGPT</div>
+            <div class="p-chip" onclick="quickProxy('https://www.spotify.com')">Spotify</div>
+          </div>
+        </div>
+
+        <div class="sec-title" style="font-size:.85rem;margin-bottom:13px;">PROXY SERVICES</div>
+        <div class="cards">
+          <div class="card" onclick="openSite('https://www.croxyproxy.com','CroxyProxy')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🌀</span><div class="card-badge badge-hot">HOT</div>
+            <div class="card-title">CroxyProxy</div><div class="card-desc">Web proxy fallback.</div>
+          </div>
+          <div class="card" onclick="openSite('https://proxysite.com','ProxySite')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🔒</span>
+            <div class="card-title">ProxySite</div><div class="card-desc">Simple & secure.</div>
+          </div>
+          <div class="card" onclick="openSite('https://hide.me/en/proxy','Hide.me')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🌊</span><div class="card-badge badge-new">NEW</div>
+            <div class="card-title">Hide.me</div><div class="card-desc">No logs proxy.</div>
+          </div>
+          <div class="card" onclick="openSite('https://www.vpnbook.com/webproxy','VPN Book')">
+            <div class="sweep"></div><span class="c-bl"></span><span class="c-br"></span>
+            <span class="card-icon">🛡️</span>
+            <div class="card-title">VPN Book</div><div class="card-desc">Free SSL proxy.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- Load Scramjet SW (only works when hosted, not local file) -->
+<script src="/uv/register.js" defer></script>
+
+<script>
+/* ═══════════ STAR CANVAS ═══════════ */
+(function(){
+  const canvas=document.getElementById('star-canvas'),ctx=canvas.getContext('2d');
+  let stars=[];
+  function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+  function init(){stars=[];for(let i=0;i<250;i++)stars.push({
+    x:Math.random()*canvas.width,y:Math.random()*canvas.height,
+    r:Math.random()*1.4+0.2,a:Math.random(),
+    da:(Math.random()*.006+.002)*(Math.random()>.5?1:-1),
+    blue:Math.random()>.6});}
+  function draw(){ctx.clearRect(0,0,canvas.width,canvas.height);
+    for(const s of stars){s.a+=s.da;if(s.a<=0||s.a>=1)s.da*=-1;
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=s.blue?`rgba(100,200,255,${s.a})`:`rgba(255,255,255,${s.a})`;
+      ctx.fill();}requestAnimationFrame(draw);}
+  resize();init();draw();window.addEventListener('resize',()=>{resize();init();});
+})();
+
+/* ═══════════ SHOOTING STARS ═══════════ */
+function spawnShoot(){
+  const el=document.createElement('div');el.className='shoot';
+  el.style.cssText=`top:${Math.random()*65}%;left:0;--sd:${(Math.random()*1.5+.7).toFixed(2)}s`;
+  document.body.appendChild(el);el.addEventListener('animationend',()=>el.remove());}
+setInterval(spawnShoot,3200);setTimeout(spawnShoot,900);
+
+/* ═══════════ HUD CLOCK ═══════════ */
+setInterval(()=>{
+  const el=document.getElementById('hud-time');
+  if(el)el.textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+},1000);
+
+/* ═══════════ SCRAMJET SW STATUS ═══════════ */
+let swReady = false;
+
+async function initSW(){
+  const badge=document.getElementById('proxy-status-badge');
+  const text=document.getElementById('proxy-status-text');
+  const hudSW=document.getElementById('hud-sw');
+
+  if(!navigator.serviceWorker){
+    badge.className='proxy-status error';
+    text.textContent='SW NOT SUPPORTED — USING CROXYPROXY';
+    if(hudSW)hudSW.textContent='NONE';
+    swReady=false; return;
+  }
+
+  try {
+    const reg = await navigator.serviceWorker.register('/uv/uv.sw.js',{scope:'/scramjet/'});
+    await navigator.serviceWorker.ready;
+    swReady=true;
+    badge.className='proxy-status';
+    text.textContent='SCRAMJET READY — FULL BYPASS ACTIVE';
+    if(hudSW)hudSW.textContent='READY';
+    document.getElementById('hud-engine').textContent='SCRAMJET';
+  } catch(e){
+    swReady=false;
+    badge.className='proxy-status error';
+    text.textContent='SW FAILED — FALLBACK TO CROXYPROXY';
+    if(hudSW)hudSW.textContent='OFFLINE';
+    console.warn('[Nova] SW failed:',e);
+  }
+}
+initSW();
+
+/* ═══════════ PROXY ENGINE ═══════════ */
+let engine = 'uv'; // 'scramjet' | 'croxy'
+
+function setEngine(e){
+  engine=e;
+  document.getElementById('eng-sj').classList.toggle('active',e==='uv');
+  document.getElementById('eng-cx').classList.toggle('active',e==='croxy');
+  const note=document.getElementById('proxy-engine-note');
+  note.textContent = e==='uv'
+    ? '// ultraviolet — service worker proxy, full bypass, no X-Frame-Options'
+    : '// croxyproxy — server-side relay, good fallback';
+}
+
+function buildUrl(url){
+  if(!url)return null;
+  if(!url.startsWith('http'))url='https://'+url;
+  if(engine==='uv'&&swReady){
+    // Ultraviolet SW intercepts and proxies
+    const encoded = encodeURIComponent(btoa(url).split('').map((c,i)=>String.fromCharCode(c.charCodeAt(0)^2)).join(''));
+    return '/uv/service/' + btoa(url).replace(/=/g,'');
+  }
+  return 'https://www.croxyproxy.com/?url='+encodeURIComponent(url);
+}
+
+/* ═══════════ PAGE STATE ═══════════ */
+const homePage=document.getElementById('home-page');
+const innerApp=document.getElementById('inner-app');
+
+function enterApp(tab){
+  homePage.style.display='none';
+  innerApp.classList.add('open');
+  document.querySelectorAll('.btab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  const te=document.getElementById('tab-'+tab);
+  if(te)te.classList.add('active');
+  const se=document.getElementById(tab);
+  if(se)se.classList.add('active');
+}
+
+function goHome(){
+  closeBrowser();
+  innerApp.classList.remove('open');
+  homePage.style.display='';
+}
+
+function switchTab(id,btn){
+  closeBrowser();
+  document.querySelectorAll('.btab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(id).classList.add('active');
+}
+
+/* ═══════════ BROWSER ═══════════ */
+const browserView =document.getElementById('browser-view');
+const cardsArea   =document.getElementById('cards-area');
+const siteFrame   =document.getElementById('site-frame');
+const urlBar      =document.getElementById('browser-url-bar');
+const frameLoading=document.getElementById('frame-loading');
+const blockedNote =document.getElementById('blocked-notice');
+const methodBadge =document.getElementById('proxy-method-badge');
+let currentUrl='',blockTimer=null;
+
+function openSite(url,label){
+  currentUrl=url;
+  const proxied=buildUrl(url);
+  const isSJ = engine==='uv'&&swReady;
+
+  urlBar.textContent=url;
+  methodBadge.textContent=isSJ?'ULTRAVIOLET':'CROXYPROXY';
+  methodBadge.className='badge-'+(isSJ?'scramjet':'croxy');
+  document.getElementById('loading-sub').textContent=
+    'via '+(isSJ?'ultraviolet engine':'croxyproxy relay');
+
+  browserView.classList.add('open');
+  cardsArea.style.display='none';
+  frameLoading.classList.add('show');
+  blockedNote.classList.remove('show');
+  siteFrame.style.visibility='hidden';
+  siteFrame.src='';
+  clearTimeout(blockTimer);
+
+  requestAnimationFrame(()=>{siteFrame.src=proxied||url;});
+
+  siteFrame.onload=()=>{
+    clearTimeout(blockTimer);
+    frameLoading.classList.remove('show');
+    siteFrame.style.visibility='visible';
+    try{
+      const doc=siteFrame.contentDocument;
+      if(doc&&doc.body&&doc.body.innerHTML.trim()==='')showBlocked();
+    }catch(e){}
+  };
+  siteFrame.onerror=()=>{clearTimeout(blockTimer);showBlocked();};
+  blockTimer=setTimeout(()=>{
+    if(frameLoading.classList.contains('show'))showBlocked();
+  },10000);
+}
+
+function showBlocked(){
+  frameLoading.classList.remove('show');
+  siteFrame.style.visibility='hidden';
+  blockedNote.classList.add('show');
+}
+
+function closeBrowser(){
+  clearTimeout(blockTimer);
+  browserView.classList.remove('open');
+  cardsArea.style.display='';
+  siteFrame.src='about:blank';
+  siteFrame.style.visibility='visible';
+  frameLoading.classList.remove('show');
+  blockedNote.classList.remove('show');
+  currentUrl='';urlBar.textContent='about:blank';
+}
+
+function openNewWin(){if(currentUrl)window.open(currentUrl,'_blank');}
+
+function fallbackProxy(){
+  const u='https://www.croxyproxy.com/?url='+encodeURIComponent(currentUrl);
+  siteFrame.style.visibility='visible';
+  blockedNote.classList.remove('show');
+  frameLoading.classList.add('show');
+  siteFrame.src=u;
+  methodBadge.textContent='CROXYPROXY';
+  methodBadge.className='badge-croxy';
+}
+
+function proxyFromBrowser(){fallbackProxy();}
+
+/* ═══════════ PROXY ═══════════ */
+function goProxy(){
+  let url=document.getElementById('proxy-url').value.trim();
+  if(!url)return;
+  if(!url.startsWith('http'))url='https://'+url;
+  openSite(url,'Proxy: '+url);
+}
+function quickProxy(url){document.getElementById('proxy-url').value=url;goProxy();}
+document.getElementById('proxy-url').addEventListener('keydown',e=>{if(e.key==='Enter')goProxy();});
+
+function homeProxy(){
+  const url=document.getElementById('home-proxy-input').value.trim();
+  if(!url)return;
+  enterApp('proxy');
+  setTimeout(()=>{
+    document.getElementById('proxy-url').value=url;
+    goProxy();
+  },60);
+}
+function homeQuick(url){document.getElementById('home-proxy-input').value=url;homeProxy();}
+document.getElementById('home-proxy-input').addEventListener('keydown',e=>{if(e.key==='Enter')homeProxy();});
+
+/* ═══════════ SEARCH ═══════════ */
+document.getElementById('game-search').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll('.game-card').forEach(c=>{c.style.display=c.innerText.toLowerCase().includes(q)?'':'none';});
+});
+document.getElementById('app-search').addEventListener('input',function(){
+  const q=this.value.toLowerCase();
+  document.querySelectorAll('.app-card').forEach(c=>{c.style.display=c.innerText.toLowerCase().includes(q)?'':'none';});
+});
+</script>
+</body>
+</html>
